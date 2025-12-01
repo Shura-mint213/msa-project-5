@@ -1,0 +1,27 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+
+title C4 Context Diagram — To Be: Ежедневная генерация B2B прайс-листов\n
+
+Person(b2b_client, "B2B-клиент", "Получатель кастомных прайс-листов")
+
+System_Ext(current_microservices, "Текущие микросервисы магазина", "Java + Spring Boot + WildFly + Angular")
+
+System_Boundary(batch_system, "Система пакетной обработки (To Be)") {
+    System(cronjob, "Kubernetes CronJob", "Запускает Job каждый день в 06:00 утра")
+    System(k8s_job, "K8s Job\n(генерация прайс-листов)", "Python-скрипт в контейнере\nЧитает данные из БД → генерирует CSV/XLS")
+}
+
+System_Ext(postgres, "PostgreSQL", "products, categories, clients, client_prices")
+System_Ext(storage, "Объектное хранилище", "GCS / S3 / MinIO\nГотовые прайс-листы")
+System_Ext(monitoring, "Мониторинг и логи", "Prometheus + Grafana + Loki/Cloud Logging")
+
+Rel(cronjob, k8s_job, "Создаёт под")
+Rel(k8s_job, postgres, "Читает данные\n(JOIN таблиц)")
+Rel(k8s_job, storage, "Сохраняет CSV/XLS файлы")
+Rel(k8s_job, monitoring, "Отправляет логи и метрики")
+
+Rel(b2b_client, storage, "Скачивает прайс-листы", "HTTPS")
+Rel(current_microservices, postgres, "Работает с актуальными данными")
+
+@enduml
