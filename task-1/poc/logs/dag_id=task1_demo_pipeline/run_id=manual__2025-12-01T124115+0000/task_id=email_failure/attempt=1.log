@@ -1,0 +1,13 @@
+{"timestamp":"2025-12-01T12:41:44.784588Z","level":"info","event":"DAG bundles loaded: dags-folder, example_dags","logger":"airflow.dag_processing.bundles.manager.DagBundlesManager","filename":"manager.py","lineno":179}
+{"timestamp":"2025-12-01T12:41:44.785927Z","level":"info","event":"Filling up the DagBag from /opt/airflow/dags/batch_processing_demo.py","logger":"airflow.models.dagbag.DagBag","filename":"dagbag.py","lineno":593}
+{"timestamp":"2025-12-01T12:41:44.824061Z","level":"warning","event":"The `airflow.operators.python.PythonOperator` attribute is deprecated. Please use `'airflow.providers.standard.operators.python.PythonOperator'`.","category":"DeprecatedImportWarning","filename":"/opt/airflow/dags/batch_processing_demo.py","lineno":3,"logger":"py.warnings"}
+{"timestamp":"2025-12-01T12:41:44.824219Z","level":"warning","event":"The `airflow.operators.python.BranchPythonOperator` attribute is deprecated. Please use `'airflow.providers.standard.operators.python.BranchPythonOperator'`.","category":"DeprecatedImportWarning","filename":"/opt/airflow/dags/batch_processing_demo.py","lineno":3,"logger":"py.warnings"}
+{"timestamp":"2025-12-01T12:41:44.824277Z","level":"warning","event":"The `airflow.operators.email.EmailOperator` attribute is deprecated. Please use `'airflow.providers.smtp.operators.smtp.EmailOperator'`.","category":"DeprecatedImportWarning","filename":"/opt/airflow/dags/batch_processing_demo.py","lineno":4,"logger":"py.warnings"}
+{"timestamp":"2025-12-01T12:41:44.824318Z","level":"warning","event":"The `airflow.utils.trigger_rule.TriggerRule` attribute is deprecated. Please use `'airflow.task.trigger_rule.TriggerRule'`.","category":"DeprecatedImportWarning","filename":"/opt/airflow/dags/batch_processing_demo.py","lineno":5,"logger":"py.warnings"}
+{"timestamp":"2025-12-01T12:41:44.846624Z","level":"info","event":"Task instance is in running state","logger":"task.stdout"}
+{"timestamp":"2025-12-01T12:41:44.847569Z","level":"info","event":" Previous state of the Task instance: TaskInstanceState.QUEUED","logger":"task.stdout"}
+{"timestamp":"2025-12-01T12:41:44.848296Z","level":"info","event":"Current task name:email_failure","logger":"task.stdout"}
+{"timestamp":"2025-12-01T12:41:44.848672Z","level":"info","event":"Dag name:task1_demo_pipeline","logger":"task.stdout"}
+{"timestamp":"2025-12-01T12:41:46.602883Z","level":"info","event":"Task instance in success state","logger":"task.stdout"}
+{"timestamp":"2025-12-01T12:41:46.603728Z","level":"info","event":" Previous state of the Task instance: TaskInstanceState.RUNNING","logger":"task.stdout"}
+{"timestamp":"2025-12-01T12:41:46.604401Z","level":"info","event":"Task operator:<Task(EmailOperator): email_failure>","logger":"task.stdout"}
