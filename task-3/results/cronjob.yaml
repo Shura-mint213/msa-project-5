@@ -1,0 +1,28 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: daily-export-cronjob
+spec:
+  schedule: "*/5 * * * *" # каждые 5 минут — чтобы не ждать сутки
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      backoffLimit: 2 # retry при ошибке
+      ttlSecondsAfterFinished: 300
+      template:
+        spec:
+          restartPolicy: OnFailure # перезапуск контейнера при ошибке
+          containers:
+            - name: exporter
+              image: daily-exporter:latest
+              imagePullPolicy: Never # не скачиваем образы из интернета, локальный образ
+              envFrom:
+                - secretRef:
+                    name: postgres-secret
+              volumeMounts:
+                - name: output
+                  mountPath: /tmp 
+          volumes:
+            - name: output
+              emptyDir: {}

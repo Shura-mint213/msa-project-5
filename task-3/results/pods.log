@@ -1,0 +1,6 @@
+NAME                                  READY   STATUS      RESTARTS       AGE
+daily-export-cronjob-29411255-l9hgm   0/1     Completed   0              47m
+daily-export-cronjob-29411300-z8q6l   0/1     Completed   0              11s
+postgres-569b45fcc9-zfccb             1/1     Running     0              49m
+prometheus-66959c78dd-8bjh7           1/1     Running     1 (168m ago)   33d
+scaletestapp-65d9585956-rgpj6         1/1     Running     1 (168m ago)   33d
