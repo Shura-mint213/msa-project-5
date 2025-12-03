@@ -1,0 +1,27 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: daily-export-cronjob
+spec:
+  schedule: "*/5 * * * *" # каждые 5 минут — чтобы не ждать сутки
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      backoffLimit: 2 # retry при ошибке
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: exporter
+              image: daily-exporter:latest # ты соберёшь локально
+              imagePullPolicy: Never # важно для Minikube
+              envFrom:
+                - secretRef:
+                    name: postgres-secret
+              volumeMounts:
+                - name: output
+                  mountPath: /tmp
+          volumes:
+            - name: output
+              emptyDir: {}

@@ -24,7 +24,21 @@ public class JobCompletionNotificationListener implements JobExecutionListener {
 	@Override
 	public void afterJob(JobExecution jobExecution) {
 		if (jobExecution.getStatus() == BatchStatus.COMPLETED) {
-			// todo
+			log.info("=== JOB FINISHED! Проверяем результат в таблице products ===");
+
+			jdbcTemplate.query(
+					"SELECT product_id, product_name, price, final_price FROM products ORDER BY product_id",
+					(rs, row) -> """
+							ID=%d | %s | Цена=%.2f → Финальная цена=%.2f (скидка применена)
+							""".formatted(
+							rs.getLong("product_id"),
+							rs.getString("product_name"),
+							rs.getBigDecimal("price"),
+							rs.getBigDecimal("final_price")))
+					.forEach(log::info);
+
+			log.info("=== Всего обработано строк: {} ===",
+					jdbcTemplate.queryForObject("SELECT COUNT(*) FROM products", Integer.class));
 		}
 	}
 }

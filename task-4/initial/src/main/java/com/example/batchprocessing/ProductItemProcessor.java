@@ -9,6 +9,7 @@ import org.springframework.jdbc.core.DataClassRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
+import java.math.BigDecimal;
 import java.util.concurrent.atomic.AtomicReference;
 
 @Component
@@ -21,9 +22,26 @@ public class ProductItemProcessor implements ItemProcessor<Product, Product> {
 
     @Override
 	public Product process(final Product product) {
-      //todo
+        Loyality loyality = null;
 
-		return //todo
+        try {
+            loyality = jdbcTemplate.queryForObject(
+                    "SELECT * FROM loyality_data WHERE product_sku = ?",
+                    new DataClassRowMapper<>(Loyality.class),
+                    product.product_sku()
+            );
+        } catch (Exception ignored) {
+
+        }
+
+
+        return new Product(
+                product.product_id(),
+                product.product_sku(),
+                product.product_name(),
+                product.product_amount(),
+                loyality != null ? loyality.loyalityData() : "NO_LOYALITY"
+        );
 	}
 
 }
