@@ -82,6 +82,7 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - /var/lib/docker/containers:/usr/share/dockerlogs/data:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
     depends_on:
       logstash:
         condition: service_healthy
@@ -166,6 +167,7 @@ services:
       - SPRING_DATASOURCE_USERNAME=${POSTGRESDB_USER}
       - SPRING_DATASOURCE_PASSWORD=${POSTGRESDB_ROOT_PASSWORD}
       - SPRING_APPLICATION_NAME=batch-processing
+      - SPRING_BATCH_JDBC_INITIALIZE_SCHEMA=always
     ports:
       - "8080:8080"
     restart: always

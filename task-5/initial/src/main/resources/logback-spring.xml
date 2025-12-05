@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
-    <property resource="application.properties"/>
+    <property resource="application.properties" />
     <contextName>${spring.application.name}</contextName>
     <springProfile name="!non-json-logs">
         <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
@@ -13,6 +13,10 @@
                             "span": "%X{spanId:-}",
                             "parent": "%X{parentId:-}",
                             "exportable": "%X{sampled:-}",
+                            "uri": "%X{http.uri:-}",
+                            "method": "%X{http.method:-}",
+                            "status": "%X{http.status_code:-}",
+                            "route": "%X{http.route:-}",
                             "pid": "${PID:-}"
                             }
                         </pattern>
@@ -39,7 +43,7 @@
                     <threadName>
                         <fieldName>thread</fieldName>
                     </threadName>
-                    <mdc/>
+                    <mdc />
                     <arguments>
                         <includeNonStructuredArguments>false</includeNonStructuredArguments>
                     </arguments>
@@ -54,12 +58,12 @@
         </appender>
     </springProfile>
     <springProfile name="non-json-logs">
-        <include resource="org/springframework/boot/logging/logback/base.xml"/>
+        <include resource="org/springframework/boot/logging/logback/base.xml" />
     </springProfile>
     <logger name="batch-processing" level="DEBUG" additivity="false">
-        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="CONSOLE" />
     </logger>
     <root level="INFO">
-        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="CONSOLE" />
     </root>
 </configuration>

@@ -29,6 +29,19 @@ processors:
           "container.labels.io_buildpacks_lifecycle_metadata",
           "container.labels.io_buildpacks_stack_id",
         ]
+  - include_fields:
+      fields:
+        [
+          "@timestamp",
+          "level",
+          "logger",
+          "msg",
+          "trace",
+          "span",
+          "source",
+          "uri",
+          "app",
+        ]
 
 filebeat.config.modules:
   path: ${path.config}/modules.d/*.yml
