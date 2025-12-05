@@ -42,5 +42,4 @@ public class ProductItemProcessor implements ItemProcessor<Product, Product> {
 
 		return transformedProduct.get();
 	}
-
 }

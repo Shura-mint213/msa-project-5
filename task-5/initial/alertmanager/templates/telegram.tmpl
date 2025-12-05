@@ -1,0 +1,18 @@
+{{ define "telegram.message" }}
+{{ if eq .Status "firing" }}
+🔴 <b>ALERT FIRING</b>
+{{ else }}
+✅ <b>ALERT RESOLVED</b>
+{{ end }}
+
+<b>Service:</b> {{ .CommonLabels.service }}
+<b>Alert:</b> {{ .CommonLabels.alertname }}
+<b>Severity:</b> {{ .CommonLabels.severity }}
+
+{{ if .CommonAnnotations.summary }}<b>Summary:</b> {{ .CommonAnnotations.summary }}{{ end }}
+{{ if .CommonAnnotations.description }}<b>Description:</b> {{ .CommonAnnotations.description }}{{ end }}
+
+<b>Status:</b> {{ .Status }}
+<b>Time:</b> {{ .StartsAt.Format "15:04:05 UTC" }}
+{{ if eq .Status "firing" }}<b>Prometheus:</b> <a href="http://localhost:9090">Open</a>{{ end }}
+{{ end }}

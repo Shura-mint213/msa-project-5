@@ -1,6 +1,8 @@
 filebeat.inputs:
   - type: docker
     combine_partial: true
+    enabled: true
+    streams: true
     containers:
       path: "/usr/share/dockerlogs/data"
       stream: "stdout"
@@ -21,7 +23,12 @@ processors:
       host: "unix:///var/run/docker.sock"
   - drop_fields:
       # drop the fields below in order to have a cleaner
-      fields: ["container.labels.io_buildpacks_build_metadata", "container.labels.io_buildpacks_lifecycle_metadata", "container.labels.io_buildpacks_stack_id"]
+      fields:
+        [
+          "container.labels.io_buildpacks_build_metadata",
+          "container.labels.io_buildpacks_lifecycle_metadata",
+          "container.labels.io_buildpacks_stack_id",
+        ]
 
 filebeat.config.modules:
   path: ${path.config}/modules.d/*.yml
@@ -35,7 +42,7 @@ output.logstash:
 logging.level: info
 logging.to_files: false
 logging.to_syslog: false
-loggins.metrice.enabled: false
+logging.metrics.enabled: false
 logging.files:
   path: /var/log/filebeat
   name: filebeat

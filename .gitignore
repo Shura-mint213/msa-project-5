@@ -52,3 +52,6 @@ artifacts/
 
 *.nuget.props
 *.nuget.targets
+
+# Alertmanager secrets
+task-5/initial/alertmanager/alertmanager.yml

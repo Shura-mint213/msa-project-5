@@ -23,10 +23,13 @@ public class BatchConfiguration {
 
 	@Bean
 	public FlatFileItemReader<Product> reader() {
-		return new FlatFileItemReaderBuilder<Product>()
-			//todo
-			.targetType(Product.class)
-			.build();
+        return new FlatFileItemReaderBuilder<Product>()
+                .name("productItemReader")
+                .resource(new ClassPathResource("product-data.csv"))
+                .delimited()
+                .names("product_id", "product_sku", "product_name", "product_amount", "product_data")
+                .targetType(Product.class)
+                .build();
 	}
 
 	@Bean
@@ -36,19 +39,38 @@ public class BatchConfiguration {
 
 	@Bean
 	public JdbcBatchItemWriter<Product> writer(DataSource dataSource) {
-		return //todo
-
+        return new JdbcBatchItemWriterBuilder<Product>()
+                .sql("""
+                    INSERT INTO products 
+                    (product_id, product_sku, product_name, product_amount, product_data)
+                    VALUES (:product_id, :product_sku, :product_name, :product_amount, :product_data)
+                    """)
+                .dataSource(dataSource)
+                .beanMapped()
+                .build();
 	}
 
 	@Bean
-	public Job importProductJob(JobRepository jobRepository, Step step1, JobCompletionNotificationListener listener) {
-		return //todo
+	public Job importProductJob(JobRepository jobRepository, Step step1, 
+                JobCompletionNotificationListener listener) {
+        return new JobBuilder("importProductJob", jobRepository)
+                .listener(listener)
+                .start(step1)
+                .build();
 	}
 
 	@Bean
-	public Step step1(JobRepository jobRepository, DataSourceTransactionManager transactionManager,
-					  FlatFileItemReader<Product> reader, ProductItemProcessor processor, JdbcBatchItemWriter<Product> writer) {
-		return //todo
+	public Step step1(JobRepository jobRepository, 
+                DataSourceTransactionManager transactionManager,
+		FlatFileItemReader<Product> reader, 
+                ProductItemProcessor processor, 
+                JdbcBatchItemWriter<Product> writer) {
+        return new StepBuilder("step1", jobRepository)
+                .<Product, Product>chunk(100, transactionManager)
+                .reader(reader)
+                .processor(processor)
+                .writer(writer)
+                .build();
 	}
 
 }

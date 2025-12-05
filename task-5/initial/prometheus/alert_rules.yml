@@ -1,0 +1,24 @@
+groups:
+  - name: batch-processing-alerts
+    rules:
+      # Приложение упало
+      - alert: BatchAppDown
+        expr: up{job="batch-processing"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: batch-processing
+        annotations:
+          summary: "Приложение batch-processing недоступно"
+          description: "Метрика 'up' = 0 более 1 минуты. Проверьте логи контейнера app."
+
+      # Высокая загрузка CPU
+      - alert: HighCpuUsage
+        expr: process_cpu_usage{job="batch-processing"} > 0.7
+        for: 2m
+        labels:
+          severity: warning
+          service: batch-processing
+        annotations:
+          summary: "Высокая загрузка CPU ({{ $value | humanizePercentage }})"
+          description: "Загрузка CPU превышает 70% в течение 2 минут."

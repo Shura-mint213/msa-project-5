@@ -4,99 +4,181 @@ services:
   postgresdb:
     image: postgres
     restart: unless-stopped
+    container_name: "postgresdb"
     env_file: ./.env
     environment:
-      - POSTGRES_USER=$POSTGRESDB_USER
-      - POSTGRES_PASSWORD=$POSTGRESDB_ROOT_PASSWORD
-      - POSTGRES_DB=$POSTGRESDB_DATABASE
+      - "POSTGRES_USER=$POSTGRESDB_USER"
+      - "POSTGRES_PASSWORD=$POSTGRESDB_ROOT_PASSWORD"
+      - "POSTGRES_DB=$POSTGRESDB_DATABASE"
+    volumes:
+      - "./src/main/resources/schema-all.sql:/docker-entrypoint-initdb.d/init.sql"
+      - "postgres_data:/var/lib/postgresql"
     ports:
       - $POSTGRESDB_LOCAL_PORT:$POSTGRESDB_DOCKER_PORT
+    networks:
+      - monitoring
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
 
   elasticsearch:
-    image: 'docker.elastic.co/elasticsearch/elasticsearch:7.17.28'
+    image: "elasticsearch:7.17.28"
     platform: linux/amd64
-    container_name: 'elasticsearch'
-    restart: 'unless-stopped'
+    container_name: "elasticsearch"
+    restart: "unless-stopped"
     ports:
-      - '9200:9200'
-      - '9300:9300'
+      - "9200:9200"
     environment:
-      - 'discovery.type=single-node'
-      - 'xpack.security.enabled=false'
-      - 'ES_JAVA_OPTS=-Xms512m -Xmx512m'
+      - "discovery.type=single-node"
+      - "xpack.security.enabled=false"
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - "bootstrap.memory_lock=true"
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+    networks:
+      - "monitoring"
     healthcheck:
-      test: 'curl -f http://localhost:9200 || exit 1'
+      test: "curl -f http://localhost:9200 || exit 1"
 
   logstash:
-    image: 'docker.elastic.co/logstash/logstash:7.17.28'
-    container_name: 'logstash'
-    restart: 'unless-stopped'
+    image: "logstash:7.17.28"
+    container_name: "logstash"
+    restart: "unless-stopped"
     ports:
-      - '5044:5044'
+      - "5044:5044"
     volumes:
-      - './logstash/pipeline:/usr/share/logstash/pipeline/'
+      - "./logstash/pipeline/logstash.conf:/usr/share/logstash/pipeline/logstash.conf:ro"
     depends_on:
-      - 'elasticsearch'
+      elasticsearch:
+        condition: service_healthy
+    networks:
+      - "monitoring"
     healthcheck:
-      test: 'curl -f http://localhost:9600 || exit 1'
+      test: "curl -f http://localhost:9600 || exit 1"
 
   kibana:
-    image: 'docker.elastic.co/kibana/kibana:7.17.28'
-    container_name: 'kibana'
-    restart: 'unless-stopped'
+    image: "kibana:7.17.28"
+    container_name: "kibana"
+    restart: "unless-stopped"
     ports:
-      - '5601:5601'
+      - "5601:5601"
     environment:
-      - 'ELASTICSEARCH_HOSTS=http://elasticsearch:9200'
+      - "ELASTICSEARCH_HOSTS=http://elasticsearch:9200"
+      - "XPACK_ENCRYPTEDSAVEDOBJECTS_ENCRYPTIONKEY=26cd5fgh4jklmnGbqSst2vw5yz1F345Q"
     depends_on:
-      - 'elasticsearch'
+      elasticsearch:
+        condition: service_healthy
+    networks:
+      - "monitoring"
     healthcheck:
-      test: 'curl -f http://localhost:5601 || exit 1'
+      test: "curl -f http://localhost:5601 || exit 1"
 
   filebeat:
-    build: 'filebeat'
-    container_name: 'filebeat'
-    restart: 'unless-stopped'
+    build: ./filebeat
+    container_name: "filebeat"
+    restart: "unless-stopped"
     volumes:
-      - '/var/run/docker.sock:/var/run/docker.sock'
-      - '/var/lib/docker/containers:/usr/share/dockerlogs/data:ro'
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /var/lib/docker/containers:/usr/share/dockerlogs/data:ro
     depends_on:
-      - 'elasticsearch'
-      - 'logstash'
+      logstash:
+        condition: service_healthy
+    networks:
+      - "monitoring"
+    healthcheck:
+      test: ["CMD-SHELL", "filebeat test config --strict.perms=false"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   prometheus:
-    image: 'prom/prometheus:v3.4.0'
-    container_name: 'prometheus'
-    restart: 'unless-stopped'
+    image: "prom/prometheus:v3.4.0"
+    container_name: "prometheus"
+    restart: "unless-stopped"
     volumes:
-      - './prometheus/prometheus.yml:/etc/prometheus/prometheus.yml'
+      - "./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml"
+      - "./prometheus/alert_rules.yml:/etc/prometheus/alert_rules.yml"
     ports:
-      - '9090:9090'
+      - "9090:9090"
+    networks:
+      monitoring:
+        aliases:
+          - prometheus
+
+    # networks:
+    #   - monitoring
     healthcheck:
-      test: [ "CMD", "nc", "-z", "localhost", "9090" ]
+      test: ["CMD", "nc", "-z", "localhost", "9090"]
 
   grafana:
-    image: 'grafana/grafana:12.0.1'
-    container_name: 'grafana'
-    restart: 'unless-stopped'
+    image: "grafana/grafana:12.0.1"
+    container_name: "grafana"
+    restart: "unless-stopped"
     ports:
-      - '3000:3000'
+      - "3000:3000"
     environment:
-      - 'GF_USERS_ALLOW_SIGN_UP=false'
+      - "GF_SECURITY_ADMIN_PASSWORD=admin"
+      - "GF_USERS_ALLOW_SIGN_UP=false"
     volumes:
-      - './grafana/provisioning:/etc/grafana/provisioning'
+      - "./grafana/provisioning:/etc/grafana/provisioning"
+      - "grafana_data:/var/lib/grafana"
     depends_on:
-      - 'prometheus'
+      prometheus:
+        condition: service_healthy
+    networks:
+      - monitoring
     healthcheck:
-      test: [ "CMD", "nc", "-z", "localhost", "3000" ]
+      test: ["CMD", "nc", "-z", "localhost", "3000"]
+
+  alertmanager:
+    image: prom/alertmanager:v0.27.0
+    container_name: alertmanager
+    restart: unless-stopped
+    ports:
+      - "9093:9093"
+    volumes:
+      - ./alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml
+      - ./alertmanager/templates:/etc/alertmanager/templates
+      - alertmanager_data:/alertmanager
+    command:
+      - "--config.file=/etc/alertmanager/alertmanager.yml"
+      - "--storage.path=/alertmanager"
+    networks:
+      - monitoring
 
   app:
     depends_on:
-      - postgresdb
-      - filebeat1
-      - grafana
+      postgresdb:
+        condition: service_healthy
+      filebeat:
+        condition: service_healthy
+      grafana:
+        condition: service_healthy
     image: batch-processing
     build:
       context: .
       dockerfile: ./Dockerfile
-    restart: no
+    container_name: app
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgresdb:5432/${POSTGRESDB_DATABASE}
+      - SPRING_DATASOURCE_USERNAME=${POSTGRESDB_USER}
+      - SPRING_DATASOURCE_PASSWORD=${POSTGRESDB_ROOT_PASSWORD}
+      - SPRING_APPLICATION_NAME=batch-processing
+    ports:
+      - "8080:8080"
+    restart: always
+    networks:
+      - monitoring
+
+volumes:
+  es_data:
+  grafana_data:
+  postgres_data:
+  alertmanager_data:
+
+networks:
+  monitoring:
+    driver: bridge
+    name: monitoring_network

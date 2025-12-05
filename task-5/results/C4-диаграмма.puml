@@ -1,0 +1,54 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+title TradeWare — Batch Processing + Monitoring & Alerting (Task-5)\nАрхитектура с полным стеком observability
+
+LAYOUT_WITH_LEGEND()
+
+System_Boundary(tradeware, "TradeWare System") {
+    Container(batch, "Batch Processing", "Spring Boot + Spring Batch", "ETL: CSV → PostgreSQL\nActuator + Prometheus metrics")
+    ContainerDb(db, "PostgreSQL", "products, loyality_data")
+}
+
+System_Boundary(monitoring, "Monitoring & Logging Stack") {
+    Container(prometheus, "Prometheus", "v3.4.0", "Сбор и хранение метрик\nScrape /actuator/prometheus")
+    Container(alertmanager, "Alertmanager", "v0.27.0", "Обработка алертов\nWebhook → Telegram")
+    Container(grafana, "Grafana", "v12.0.1", "Визуализация метрик\nProvisioning дашбордов")
+
+    Container(filebeat, "Filebeat", "7.17.28", "Сбор Docker-логов\nInput: docker → Logstash")
+    Container(logstash, "Logstash", "7.17.28", "Парсинг и обогащение логов\nOutput → Elasticsearch")
+    Container(elasticsearch, "Elasticsearch", "7.17.28", "Хранение логов")
+    Container(kibana, "Kibana", "7.17.28", "Поиск и анализ логов\nDiscover + Alerting → Telegram")
+}
+
+Container_Ext(gcs, "GCS / Local FS", "product-data.csv")
+
+' Связи приложения
+Rel(batch, gcs, "Читает CSV")
+Rel(batch, db, "Читает loyality_data\nЗаписывает products")
+
+' Метрики
+Rel(batch, prometheus, "Экспозит метрики", "HTTP /actuator/prometheus")
+Rel(prometheus, grafana, "Данные для дашбордов", "PromQL")
+Rel(prometheus, alertmanager, "Отправляет алерты", "Alerting rules")
+Rel(alertmanager, kibana, "Telegram ← Alertmanager", "Webhook")
+
+' Логи
+Rel(batch, filebeat, "Логи (stdout)", "Docker logs")
+Rel(filebeat, logstash, "Beats → 5044")
+Rel(logstash, elasticsearch, "Индексация логов")
+Rel(elasticsearch, kibana, "Поиск и визуализация")
+Rel(kibana, kibana, "Telegram ← Kibana Alerting", "Webhook (ошибки)")
+
+note right of alertmanager
+    Пример алертов:
+    • BatchAppDown
+    • HighCpuUsage (>70%)
+end note
+
+note right of kibana
+    Kibana Alerting:
+    • При log.level = ERROR → сообщение в Telegram
+end note
+
+@enduml
